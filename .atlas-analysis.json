@@ -1,0 +1,64 @@
+{
+  "projectType": "general",
+  "projectName": "Validador de Acceso",
+  "projectDescription": "A Windows Forms desktop application for user authentication with brute-force protection and account lockout mechanisms",
+  "theme": "linden",
+  "primaryColor": "#2563eb",
+  "lightColor": "#60a5fa",
+  "darkColor": "#1e40af",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Core Features",
+        "pages": [
+          "features/user-management",
+          "features/access-validation",
+          "features/security-lockout"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "api/usuario",
+          "api/gestor-acceso",
+          "api/form-ui"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "guides/building-project",
+          "guides/customization",
+          "guides/troubleshooting"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "User registration and credential management",
+    "Secure password-based authentication",
+    "Brute-force protection with configurable attempt limits",
+    "Automatic account lockout after failed login attempts",
+    "Asynchronous UI with non-blocking timeout handling",
+    "Windows Forms-based user interface"
+  ],
+  "publicApiSurface": [
+    "Usuario class - User entity with name and password properties",
+    "GestorAcceso class - Access manager with validation and lockout logic",
+    "GestorAcceso.AgregarUsuario() - Add new user to the system",
+    "GestorAcceso.ValidarAcceso() - Validate user credentials",
+    "GestorAcceso.EstaBloqueado() - Check if system is locked",
+    "GestorAcceso.ReiniciarIntentos() - Reset failed attempt counter",
+    "GestorAcceso.IntentosFallidos - Get current failed attempts count",
+    "GestorAcceso.MaxIntentos - Get maximum allowed attempts (3)",
+    "Form1 - Main Windows Forms UI with login and registration controls"
+  ]
+}
