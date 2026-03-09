@@ -1,0 +1,513 @@
+---
+title: Form1 UI Components
+description: Main application form with UI controls and event handlers for user authentication and management
+---
+
+The `Form1` class is the main user interface form for the Validador de Acceso application. It provides controls for user authentication, registration, and system status display.
+
+## Class Definition
+
+```csharp
+public partial class Form1 : Form
+{
+    private GestorAcceso gestor;
+    private Button btnMostrarUsuarios;
+    private readonly List<string> listaNombres;
+    
+    // UI Controls defined in Form1.Designer.cs
+    // Event handlers and business logic
+}
+```
+
+**Namespace:** `ValidadorDeAcceso`
+
+**Base Class:** `System.Windows.Forms.Form`
+
+**Access Modifier:** `public`
+
+## UI Controls
+
+The form contains the following UI controls defined in `Form1.Designer.cs`:
+
+### Text Input Controls
+
+#### txtNombre
+
+```csharp
+private System.Windows.Forms.TextBox txtNombre
+```
+
+Text box for entering the username.
+
+**Type:** `TextBox`
+
+**Properties:**
+- Location: (100, 19)
+- Size: (200, 20)
+- TabIndex: 2
+
+**Usage:** Input field for both user registration and login
+
+#### txtContraseña
+
+```csharp
+private System.Windows.Forms.TextBox txtContraseña
+```
+
+Text box for entering the password.
+
+**Type:** `TextBox`
+
+**Properties:**
+- Location: (100, 53)
+- Size: (200, 20)
+- TabIndex: 3
+
+**Usage:** Input field for password entry during registration and login
+
+### Button Controls
+
+#### btnValidar
+
+```csharp
+private System.Windows.Forms.Button btnValidar
+```
+
+Button to validate user credentials and attempt login.
+
+**Type:** `Button`
+
+**Properties:**
+- Text: "Validar acceso"
+- Location: (24, 90)
+- Size: (140, 30)
+- TabIndex: 4
+
+**Event Handler:** `btnValidar_Click`
+
+#### btnAgregar
+
+```csharp
+private System.Windows.Forms.Button btnAgregar
+```
+
+Button to add a new user to the system.
+
+**Type:** `Button`
+
+**Properties:**
+- Text: "Agregar usuario"
+- Location: (160, 90)
+- Size: (140, 30)
+- TabIndex: 5
+
+**Event Handler:** `btnAgregar_Click`
+
+#### button1 (btnMostrarUsuarios)
+
+```csharp
+private System.Windows.Forms.Button button1
+```
+
+Button to toggle the visibility of the user list.
+
+**Type:** `Button`
+
+**Properties:**
+- Text: "Mostrar Usuarios" (toggles to "Ocultar usuarios")
+- Location: (160, 126)
+- Size: (140, 30)
+- TabIndex: 9
+
+**Event Handler:** `button1_Click`
+
+### Label Controls
+
+#### lblNombre
+
+```csharp
+private System.Windows.Forms.Label lblNombre
+```
+
+Label for the username input field.
+
+**Type:** `Label`
+
+**Properties:**
+- Text: "Nombre:"
+- Location: (24, 22)
+- AutoSize: true
+
+#### lblContraseña
+
+```csharp
+private System.Windows.Forms.Label lblContraseña
+```
+
+Label for the password input field.
+
+**Type:** `Label`
+
+**Properties:**
+- Text: "Contraseña:"
+- Location: (24, 56)
+- AutoSize: true
+
+#### lblEstado
+
+```csharp
+private System.Windows.Forms.Label lblEstado
+```
+
+Label displaying the current system status and feedback messages.
+
+**Type:** `Label`
+
+**Properties:**
+- Text: "Estado" (changes dynamically)
+- Location: (24, 157)
+- AutoSize: true
+
+**Dynamic States:**
+- "Listo" - Initial state
+- "Usuario '[nombre]' agregado" - After successful user registration
+- "¡Bienvenido, [nombre]!" - Successful login
+- "Credenciales incorrectas" - Failed login
+- "BLOQUEADO: Espere 5 segundos..." - System blocked
+- "Sistema desbloqueado. Intente de nuevo" - After unblock
+
+#### lblIntentos
+
+```csharp
+private System.Windows.Forms.Label lblIntentos
+```
+
+Label displaying the current count of failed login attempts.
+
+**Type:** `Label`
+
+**Properties:**
+- Text: "Intentos fallidos: 0" (updates dynamically)
+- Location: (24, 179)
+- AutoSize: true
+
+**Event Handler:** `lblIntentos_Click` (empty implementation)
+
+### List Controls
+
+#### lstUsuarios
+
+```csharp
+private System.Windows.Forms.ListBox lstUsuarios
+```
+
+List box displaying all registered usernames.
+
+**Type:** `ListBox`
+
+**Properties:**
+- Location: (320, 19)
+- Size: (200, 173)
+- TabIndex: 8
+- Visible: false (initially hidden)
+- FormattingEnabled: true
+
+**Event Handler:** `lstUsuarios_SelectedIndexChanged_1`
+
+**Behavior:** When a user is selected, the username is populated into `txtNombre`
+
+## Private Fields
+
+### gestor
+
+```csharp
+private GestorAcceso gestor
+```
+
+Instance of the `GestorAcceso` class that handles authentication logic.
+
+**Initialized:** In the `Form1()` constructor
+
+### listaNombres
+
+```csharp
+private readonly List<string> listaNombres
+```
+
+Local list maintaining usernames for UI display purposes.
+
+**Type:** `List<string>` (read-only field)
+
+**Purpose:** Keeps track of registered usernames to populate `lstUsuarios`
+
+## Event Handlers
+
+### btnAgregar_Click
+
+```csharp
+private void btnAgregar_Click(object sender, EventArgs e)
+```
+
+Handles the "Agregar usuario" button click to register a new user.
+
+**Behavior:**
+1. Retrieves and trims the username from `txtNombre`
+2. Retrieves the password from `txtContraseña`
+3. Validates that both fields are not empty
+4. Creates a new `Usuario` and adds it via `gestor.AgregarUsuario()`
+5. Adds the username to `listaNombres`
+6. Updates the status label with success message
+7. Clears input fields and focuses on `txtNombre`
+8. Calls `ActualizarListaUsuarios()` to refresh the UI list
+
+**Validation:**
+- Empty fields: Displays "Nombre y contraseña obligatorios."
+
+**Example Flow:**
+```
+User enters: nombre="alice", contraseña="pass123"
+→ Clicks "Agregar usuario"
+→ lblEstado shows: 'Usuario "alice" agregado.'
+→ Fields cleared
+```
+
+### btnValidar_Click
+
+```csharp
+private async void btnValidar_Click(object sender, EventArgs e)
+```
+
+Handles the "Validar acceso" button click to authenticate a user. This is an async method.
+
+**Behavior:**
+1. Retrieves and trims the username from `txtNombre`
+2. Retrieves the password from `txtContraseña`
+3. Validates that both fields are not empty
+4. Calls `gestor.ValidarAcceso()` to validate credentials
+5. On success: Displays welcome message
+6. On failure: Displays error message
+7. Updates the failed attempts counter display
+8. Checks if system is blocked via `gestor.EstaBloqueado()`
+9. If blocked:
+   - Displays "BLOQUEADO: Espere 5 segundos..."
+   - Disables all controls via `DeshabilitarAcciones()`
+   - Waits 5 seconds using `await Task.Delay(5000)`
+   - Calls `gestor.ReiniciarIntentos()` to reset counter
+   - Re-enables controls via `HabilitarAcciones()`
+   - Updates status to "Sistema desbloqueado. Intente de nuevo."
+   - Clears password field and sets focus
+
+**Validation:**
+- Empty fields: Displays "Ingrese sus datos."
+
+**Example Flow:**
+```
+User enters: nombre="alice", contraseña="wrong"
+→ Clicks "Validar acceso"
+→ lblEstado shows: "Credenciales incorrectas."
+→ lblIntentos shows: "Intentos fallidos: 1/3"
+
+(After 3 failed attempts)
+→ lblEstado shows: "BLOQUEADO: Espere 5 segundos..."
+→ All controls disabled
+→ (5 second delay)
+→ Controls re-enabled
+→ lblEstado shows: "Sistema desbloqueado. Intente de nuevo."
+```
+
+### button1_Click
+
+```csharp
+private void button1_Click(object sender, EventArgs e)
+```
+
+Handles the "Mostrar usuarios" button click to toggle the user list visibility.
+
+**Behavior:**
+1. Toggles `lstUsuarios.Visible` between true and false
+2. Updates button text based on visibility:
+   - Visible: "Ocultar usuarios"
+   - Hidden: "Mostrar usuarios"
+
+### lstUsuarios_SelectedIndexChanged_1
+
+```csharp
+private void lstUsuarios_SelectedIndexChanged_1(object sender, EventArgs e)
+```
+
+Handles selection changes in the users list box.
+
+**Behavior:**
+1. Checks if an item is selected
+2. Populates the selected username into `txtNombre`
+3. Clears `txtContraseña`
+4. Sets focus to `txtContraseña`
+
+**Purpose:** Allows quick selection of existing users for login
+
+### Form1_Load
+
+```csharp
+private void Form1_Load(object sender, EventArgs e)
+```
+
+Handles the form load event. Currently empty.
+
+### lblIntentos_Click
+
+```csharp
+private void lblIntentos_Click(object sender, EventArgs e)
+```
+
+Handles clicks on the attempts label. Currently empty.
+
+## Private Helper Methods
+
+### DeshabilitarAcciones
+
+```csharp
+private void DeshabilitarAcciones()
+```
+
+Disables all interactive controls when the system is blocked.
+
+**Disables:**
+- `btnValidar`
+- `btnAgregar`
+- `txtNombre`
+- `txtContraseña`
+- `button1` (if not null)
+- `lstUsuarios`
+
+### HabilitarAcciones
+
+```csharp
+private void HabilitarAcciones()
+```
+
+Re-enables all interactive controls after the block timeout expires.
+
+**Enables:**
+- `btnValidar`
+- `btnAgregar`
+- `txtNombre`
+- `txtContraseña`
+- `button1` (if not null)
+- `lstUsuarios`
+
+### ActualizarIntentos
+
+```csharp
+private void ActualizarIntentos()
+```
+
+Updates the failed attempts label with current counter values.
+
+**Updates:** `lblIntentos.Text` to format: `"Intentos fallidos: {current}/{max}"`
+
+**Example:** "Intentos fallidos: 2/3"
+
+### ActualizarListaUsuarios
+
+```csharp
+private void ActualizarListaUsuarios()
+```
+
+Refreshes the user list box with all registered usernames.
+
+**Behavior:**
+1. Calls `lstUsuarios.BeginUpdate()` for performance
+2. Clears all existing items
+3. Iterates through `listaNombres` and adds each to the list box
+4. Calls `lstUsuarios.EndUpdate()` to refresh
+5. If list is empty, hides the list box and resets button text
+
+## Constructor
+
+### Form1()
+
+```csharp
+public Form1()
+```
+
+Initializes the form and sets up the initial state.
+
+**Initialization:**
+1. Calls `InitializeComponent()` to create UI controls
+2. Sets `btnMostrarUsuarios` reference to `button1`
+3. Creates new `GestorAcceso` instance
+4. Hides `lstUsuarios` (sets Visible to false)
+5. Sets `button1` text to "Mostrar usuarios"
+6. Calls `ActualizarIntentos()` to display initial counter
+7. Sets `lblEstado.Text` to "Listo"
+
+## Form Properties
+
+**Title:** "Validador de Acceso"
+
+**Client Size:** 544 x 211 pixels
+
+**Form Name:** "Form1"
+
+## Usage Example
+
+```csharp
+using System;
+using System.Windows.Forms;
+
+namespace ValidadorDeAcceso
+{
+    static class Program
+    {
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
+        }
+    }
+}
+```
+
+## User Interaction Flow
+
+### Adding a User
+
+1. User enters username in `txtNombre`
+2. User enters password in `txtContraseña`
+3. User clicks `btnAgregar`
+4. System validates inputs
+5. System adds user to `gestor` and `listaNombres`
+6. System displays success message
+7. System clears input fields
+8. System updates user list if visible
+
+### Validating Access
+
+1. User enters username in `txtNombre`
+2. User enters password in `txtContraseña`
+3. User clicks `btnValidar`
+4. System validates credentials
+5. System displays success or failure message
+6. System updates failed attempts counter
+7. If 3 failures reached:
+   - System blocks for 5 seconds
+   - All controls disabled
+   - After timeout, system resets and re-enables controls
+
+### Viewing Users
+
+1. User clicks `button1` ("Mostrar usuarios")
+2. System displays `lstUsuarios` with all registered usernames
+3. Button text changes to "Ocultar usuarios"
+4. User can click a username to auto-populate `txtNombre`
+5. User clicks button again to hide the list
+
+## Notes
+
+- The form uses async/await for the 5-second block timeout to prevent UI freezing
+- Password field does not use `PasswordChar` property (shows plain text)
+- The `listaNombres` list is separate from the `GestorAcceso` user list for UI purposes
+- All controls are disabled during the block period to prevent interaction
+- The form automatically focuses on appropriate fields after actions for better UX

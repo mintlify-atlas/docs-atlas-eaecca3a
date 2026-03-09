@@ -1,0 +1,221 @@
+---
+title: Building the Project
+description: Learn how to build and compile the Validador de Acceso application in Debug and Release configurations
+---
+
+## Overview
+
+Validador de Acceso is a Windows Forms application built with C# and .NET Framework 4.7.2. This guide covers the build process, configuration options, and output locations.
+
+## Prerequisites
+
+Before building the project, ensure you have:
+
+- **Visual Studio 2017 or later** (with .NET desktop development workload)
+- **.NET Framework 4.7.2** or higher installed
+- **Windows OS** (required for Windows Forms development)
+
+<Note>
+The project uses MSBuild ToolsVersion 15.0. Visual Studio 2017 or later will automatically support this version.
+</Note>
+
+## Build Configurations
+
+The project includes two standard build configurations:
+
+### Debug Configuration
+
+The Debug configuration is optimized for development and debugging:
+
+<Steps>
+  <Step title="Configuration Settings">
+    - **Platform Target**: AnyCPU
+    - **Optimization**: Disabled (`Optimize=false`)
+    - **Debug Symbols**: Full (`DebugType=full`)
+    - **Constants Defined**: `DEBUG;TRACE`
+    - **Output Path**: `bin\Debug\`
+  </Step>
+  
+  <Step title="When to Use">
+    Use Debug configuration when:
+    - Developing and testing new features
+    - Troubleshooting issues with breakpoints
+    - Running unit tests with code coverage
+    - Debugging authentication flow
+  </Step>
+</Steps>
+
+### Release Configuration
+
+The Release configuration is optimized for production deployment:
+
+<Steps>
+  <Step title="Configuration Settings">
+    - **Platform Target**: AnyCPU
+    - **Optimization**: Enabled (`Optimize=true`)
+    - **Debug Symbols**: PDB only (`DebugType=pdbonly`)
+    - **Constants Defined**: `TRACE`
+    - **Output Path**: `bin\Release\`
+  </Step>
+  
+  <Step title="When to Use">
+    Use Release configuration when:
+    - Creating production builds
+    - Deploying to end users
+    - Performance testing
+    - Creating installer packages
+  </Step>
+</Steps>
+
+## Building in Visual Studio
+
+<Steps>
+  <Step title="Open the Solution">
+    Open `ValidadorDeAcceso.sln` in Visual Studio.
+  </Step>
+  
+  <Step title="Select Configuration">
+    In the toolbar, select either **Debug** or **Release** from the configuration dropdown.
+  </Step>
+  
+  <Step title="Build the Project">
+    Use one of these methods:
+    
+    - Press **F6** to build the solution
+    - Click **Build > Build Solution** from the menu
+    - Right-click the project in Solution Explorer and select **Build**
+  </Step>
+  
+  <Step title="Verify Output">
+    Check the Output window for build results. A successful build shows:
+    
+    ```
+    Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped
+    ```
+  </Step>
+</Steps>
+
+## Building from Command Line
+
+You can build the project using MSBuild from the command line:
+
+### Debug Build
+
+```bash
+msbuild ValidadorDeAcceso.csproj /p:Configuration=Debug /p:Platform="Any CPU"
+```
+
+### Release Build
+
+```bash
+msbuild ValidadorDeAcceso.csproj /p:Configuration=Release /p:Platform="Any CPU"
+```
+
+### Clean and Rebuild
+
+```bash
+msbuild ValidadorDeAcceso.csproj /t:Clean,Build /p:Configuration=Release
+```
+
+<Tip>
+Add MSBuild to your PATH for easier command-line access. Typically located at:
+`C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\`
+</Tip>
+
+## Output Files
+
+After a successful build, the following files are generated:
+
+### Debug Output (`bin\Debug\`)
+
+```
+ValidadorDeAcceso.exe       # Main executable
+ValidadorDeAcceso.pdb       # Full debug symbols
+ValidadorDeAcceso.exe.config # App configuration
+```
+
+### Release Output (`bin\Release\`)
+
+```
+ValidadorDeAcceso.exe       # Optimized executable
+ValidadorDeAcceso.pdb       # Limited debug symbols
+ValidadorDeAcceso.exe.config # App configuration
+```
+
+<Note>
+The executable file `ValidadorDeAcceso.exe` is the standalone application that can be distributed to users. It requires .NET Framework 4.7.2 to be installed on the target machine.
+</Note>
+
+## Project Structure
+
+The project includes the following source files:
+
+```csharp
+// Core application files
+Program.cs              // Application entry point
+Form1.cs                // Main form logic
+Form1.Designer.cs       // UI designer code
+Form1.resx              // Form resources
+
+// Business logic
+GestorAcceso.cs         // Access management and validation
+Usuario.cs              // User model
+
+// Resources
+Properties/AssemblyInfo.cs
+Properties/Resources.resx
+Properties/Settings.settings
+App.config
+```
+
+## Build Dependencies
+
+The project references the following .NET Framework assemblies:
+
+- `System`
+- `System.Core`
+- `System.Data`
+- `System.Drawing`
+- `System.Windows.Forms`
+- `System.Xml`
+- `System.Net.Http`
+- `Microsoft.CSharp`
+
+<Warning>
+These are standard .NET Framework assemblies and should be available automatically. If build errors occur referencing missing assemblies, verify your .NET Framework installation.
+</Warning>
+
+## Troubleshooting Build Issues
+
+### Missing .NET Framework
+
+If you see errors about missing target framework:
+
+```
+error MSB3644: The reference assemblies for framework ".NETFramework,Version=v4.7.2" were not found.
+```
+
+**Solution**: Install .NET Framework 4.7.2 Developer Pack from Microsoft.
+
+### Visual Studio Version Issues
+
+If you encounter MSBuild toolset errors:
+
+**Solution**: Update Visual Studio to 2017 or later, or modify the `ToolsVersion` in the `.csproj` file.
+
+### Platform Target Conflicts
+
+If you see platform-specific build errors:
+
+**Solution**: Ensure Platform is set to "Any CPU" in the build configuration.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Customize the App" icon="palette" href="/guides/customization">
+    Learn how to modify max attempts, timeout duration, and UI elements
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/guides/troubleshooting">
+    Find solutions to common runtime and configuration issues
+  </Card>
+</CardGroup>

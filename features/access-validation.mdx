@@ -1,0 +1,297 @@
+---
+title: 'Access Validation'
+description: 'Authentication and validation logic for user credentials'
+---
+
+## Overview
+
+The access validation system is the core authentication mechanism of the Validador de Acceso application. It validates user credentials against registered users and tracks failed attempts for security purposes.
+
+## ValidarAcceso() Method
+
+The `ValidarAcceso()` method in the `GestorAcceso` class is responsible for authenticating users:
+
+```csharp
+public bool ValidarAcceso(string nombre, string contraseña)
+{
+    // Si ya está bloqueado lógicamente, no validar (capa de seguridad extra)
+    if (intentosFallidos >= MAX_INTENTOS)
+    {
+        return false;
+    }
+
+    foreach (var usuario in usuarios)
+    {
+        if (usuario.Nombre == nombre && usuario.Contraseña == contraseña)
+        {
+            intentosFallidos = 0; // Éxito: Reiniciar contador
+            return true;
+        }
+    }
+
+    // Fallo: Aumentar contador
+    intentosFallidos++;
+    return false;
+}
+```
+
+## Authentication Flow
+
+<Steps>
+  <Step title="Lockout Check">
+    First, the method checks if the system is already locked due to excessive failed attempts:
+    
+    ```csharp
+    if (intentosFallidos >= MAX_INTENTOS)
+    {
+        return false;
+    }
+    ```
+    
+    This provides an additional security layer by preventing validation when locked.
+  </Step>
+  
+  <Step title="Credential Matching">
+    The method iterates through registered users to find a match:
+    
+    ```csharp
+    foreach (var usuario in usuarios)
+    {
+        if (usuario.Nombre == nombre && usuario.Contraseña == contraseña)
+        {
+            intentosFallidos = 0; // Éxito: Reiniciar contador
+            return true;
+        }
+    }
+    ```
+    
+    Both username and password must match exactly (case-sensitive).
+  </Step>
+  
+  <Step title="Success Handling">
+    On successful authentication:
+    - Failed attempts counter is reset to 0
+    - Method returns `true`
+    - User gains access to the application
+  </Step>
+  
+  <Step title="Failure Handling">
+    On authentication failure:
+    - Failed attempts counter is incremented
+    - Method returns `false`
+    - System may trigger lockout if threshold is reached
+    
+    ```csharp
+    intentosFallidos++;
+    return false;
+    ```
+  </Step>
+</Steps>
+
+## UI Integration
+
+The validation process is triggered from the Windows Forms interface:
+
+### Validation Button Handler
+
+```csharp
+private async void btnValidar_Click(object sender, EventArgs e)
+{
+    var nombre = txtNombre.Text.Trim();
+    var contraseña = txtContraseña.Text;
+
+    if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(contraseña))
+    {
+        lblEstado.Text = "Ingrese sus datos.";
+        return;
+    }
+
+    // 1. Validar credenciales
+    var valido = gestor.ValidarAcceso(nombre, contraseña);
+
+    if (valido)
+    {
+        lblEstado.Text = $"¡Bienvenido, {nombre}!";
+    }
+    else
+    {
+        lblEstado.Text = "Credenciales incorrectas.";
+    }
+
+    ActualizarIntentos();
+    
+    // 2. Comprobar si debemos bloquear
+    if (gestor.EstaBloqueado())
+    {
+        // Lockout logic follows...
+    }
+}
+```
+
+<Note>
+  The validation button handler is marked as `async` to support the asynchronous lockout mechanism without freezing the UI.
+</Note>
+
+## Input Validation
+
+Before attempting authentication, the system validates user input:
+
+<Accordion title="Empty Field Check">
+```csharp
+if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(contraseña))
+{
+    lblEstado.Text = "Ingrese sus datos.";
+    return;
+}
+```
+
+The `Trim()` method is applied to the username to remove leading/trailing whitespace:
+```csharp
+var nombre = txtNombre.Text.Trim();
+```
+</Accordion>
+
+## Status Tracking
+
+The system provides real-time feedback about authentication attempts:
+
+### Success Message
+
+```csharp
+if (valido)
+{
+    lblEstado.Text = $"¡Bienvenido, {nombre}!";
+}
+```
+
+### Failure Message
+
+```csharp
+else
+{
+    lblEstado.Text = "Credenciales incorrectas.";
+}
+```
+
+### Attempt Counter Display
+
+```csharp
+private void ActualizarIntentos()
+{
+    lblIntentos.Text = $"Intentos fallidos: {gestor.IntentosFallidos}/{gestor.MaxIntentos}";
+}
+```
+
+## Security Constants
+
+The maximum number of allowed failed attempts is defined as a public constant:
+
+```csharp
+public const int MAX_INTENTOS = 3;
+```
+
+<Warning>
+  After 3 failed login attempts, the system triggers a security lockout. See the [Security Lockout](/features/security-lockout) documentation for details.
+</Warning>
+
+## State Management Properties
+
+The `GestorAcceso` class exposes several properties for state inspection:
+
+```csharp
+public int IntentosFallidos
+{
+    get { return intentosFallidos; }
+}
+
+public int MaxIntentos
+{
+    get { return MAX_INTENTOS; }
+}
+
+public bool EstaBloqueado()
+{
+    return intentosFallidos >= MAX_INTENTOS;
+}
+```
+
+### Properties Explained
+
+<CardGroup cols={3}>
+  <Card title="IntentosFallidos" icon="counter">
+    Returns the current count of consecutive failed login attempts
+  </Card>
+  <Card title="MaxIntentos" icon="shield">
+    Returns the maximum allowed attempts (3) before lockout
+  </Card>
+  <Card title="EstaBloqueado()" icon="lock">
+    Returns true if the system is currently in lockout state
+  </Card>
+</CardGroup>
+
+## Reset Mechanism
+
+The failed attempts counter can be reset through two mechanisms:
+
+<AccordionGroup>
+  <Accordion title="Successful Login">
+    Automatic reset when user successfully authenticates:
+    ```csharp
+    intentosFallidos = 0; // Éxito: Reiniciar contador
+    return true;
+    ```
+  </Accordion>
+  
+  <Accordion title="Manual Reset">
+    Explicit reset after lockout timeout expires:
+    ```csharp
+    public void ReiniciarIntentos()
+    {
+        intentosFallidos = 0;
+    }
+    ```
+    
+    This is called from the UI after the 5-second lockout period.
+  </Accordion>
+</AccordionGroup>
+
+## Authentication Algorithm
+
+The validation uses a simple linear search algorithm:
+
+<Info>
+  **Algorithm Characteristics:**
+  - **Time Complexity:** O(n) where n is the number of registered users
+  - **Space Complexity:** O(1) - no additional memory allocation
+  - **Comparison Method:** Exact string matching (case-sensitive)
+  - **Early Exit:** Returns immediately on first match
+</Info>
+
+## Security Features
+
+<CardGroup cols={2}>
+  <Card title="Brute-Force Protection" icon="shield-halved">
+    Limits authentication attempts to prevent password guessing
+  </Card>
+  <Card title="Double-Check Security" icon="shield-check">
+    Validates lockout state before processing credentials
+  </Card>
+  <Card title="Counter Reset on Success" icon="rotate-left">
+    Automatically resets failed attempts when valid credentials are provided
+  </Card>
+  <Card title="Immediate Lockout" icon="ban">
+    Refuses all validation attempts once lockout threshold is reached
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+1. **Always trim username input** to avoid validation failures due to whitespace
+2. **Update UI immediately** after validation to provide user feedback
+3. **Check lockout state** after each validation attempt
+4. **Clear sensitive fields** appropriately based on application security requirements
+
+## Related Features
+
+- [User Management](/features/user-management) - Learn how users are registered
+- [Security Lockout](/features/security-lockout) - Understand the lockout mechanism

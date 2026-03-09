@@ -1,0 +1,133 @@
+---
+title: Usuario Class
+description: Represents a user with username and password credentials for authentication
+---
+
+The `Usuario` class is a core model class that encapsulates user credentials in the Validador de Acceso application. It provides properties for storing and accessing user information.
+
+## Class Definition
+
+```csharp
+internal class Usuario
+{
+    private string nombre = "";
+    private string contraseña = "";
+    
+    public string Nombre { get; set; }
+    public string Contraseña { get; set; }
+    
+    public Usuario()
+    public Usuario(string nombre, string contraseña)
+}
+```
+
+**Namespace:** `ValidadorDeAcceso`
+
+**Access Modifier:** `internal`
+
+## Properties
+
+### Nombre
+
+```csharp
+public string Nombre { get; set; }
+```
+
+Gets or sets the username for the user account.
+
+**Type:** `string`
+
+**Default Value:** Empty string ("")
+
+**Usage:**
+```csharp
+var usuario = new Usuario();
+usuario.Nombre = "john_doe";
+string username = usuario.Nombre;
+```
+
+### Contraseña
+
+```csharp
+public string Contraseña { get; set; }
+```
+
+Gets or sets the password for the user account.
+
+**Type:** `string`
+
+**Default Value:** Empty string ("")
+
+**Usage:**
+```csharp
+var usuario = new Usuario();
+usuario.Contraseña = "securePass123";
+string password = usuario.Contraseña;
+```
+
+## Constructors
+
+### Usuario()
+
+```csharp
+public Usuario()
+```
+
+Default constructor that creates a new user instance with empty credentials.
+
+**Initializes:**
+- `nombre` to empty string
+- `contraseña` to empty string
+
+**Example:**
+```csharp
+var usuario = new Usuario();
+usuario.Nombre = "admin";
+usuario.Contraseña = "admin123";
+```
+
+### Usuario(string nombre, string contraseña)
+
+```csharp
+public Usuario(string nombre, string contraseña)
+```
+
+Parameterized constructor that creates a new user instance with specified credentials.
+
+<ParamField path="nombre" type="string" required>
+  The username for the new user
+</ParamField>
+
+<ParamField path="contraseña" type="string" required>
+  The password for the new user
+</ParamField>
+
+**Example:**
+```csharp
+var usuario = new Usuario("admin", "admin123");
+```
+
+## Usage Example
+
+```csharp
+using ValidadorDeAcceso;
+
+// Create user with default constructor
+var user1 = new Usuario();
+user1.Nombre = "alice";
+user1.Contraseña = "password123";
+
+// Create user with parameterized constructor
+var user2 = new Usuario("bob", "securePass456");
+
+// Access properties
+string username = user2.Nombre;  // "bob"
+string password = user2.Contraseña;  // "securePass456"
+```
+
+## Notes
+
+- The class uses private backing fields (`nombre`, `contraseña`) with public property accessors
+- Both properties support full get/set operations
+- Passwords are stored as plain text strings (consider encryption for production use)
+- The class is marked as `internal`, limiting its visibility to the same assembly

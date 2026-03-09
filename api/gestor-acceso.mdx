@@ -1,0 +1,289 @@
+---
+title: GestorAcceso Class
+description: Manages user authentication, access validation, and brute-force protection with failed attempt tracking
+---
+
+The `GestorAcceso` class is the core authentication manager that handles user registration, credential validation, and brute-force protection through failed login attempt tracking.
+
+## Class Definition
+
+```csharp
+internal class GestorAcceso
+{
+    private List<Usuario> usuarios;
+    private int intentosFallidos = 0;
+    public const int MAX_INTENTOS = 3;
+    
+    public GestorAcceso()
+    public GestorAcceso(List<Usuario> usuarios)
+    
+    public void AgregarUsuario(Usuario usuario)
+    public bool ValidarAcceso(string nombre, string contraseña)
+    public void ReiniciarIntentos()
+    public bool EstaBloqueado()
+    
+    public int IntentosFallidos { get; }
+    public int MaxIntentos { get; }
+}
+```
+
+**Namespace:** `ValidadorDeAcceso`
+
+**Access Modifier:** `internal`
+
+## Constants
+
+### MAX_INTENTOS
+
+```csharp
+public const int MAX_INTENTOS = 3
+```
+
+The maximum number of failed login attempts allowed before the system is blocked.
+
+**Type:** `int`
+
+**Value:** `3`
+
+## Properties
+
+### IntentosFallidos
+
+```csharp
+public int IntentosFallidos { get; }
+```
+
+Gets the current number of consecutive failed login attempts.
+
+**Type:** `int` (read-only)
+
+**Returns:** The count of failed attempts since the last successful login or reset
+
+**Usage:**
+```csharp
+int failedCount = gestor.IntentosFallidos;
+Console.WriteLine($"Failed attempts: {failedCount}");
+```
+
+### MaxIntentos
+
+```csharp
+public int MaxIntentos { get; }
+```
+
+Gets the maximum number of allowed failed attempts before blocking.
+
+**Type:** `int` (read-only)
+
+**Returns:** The value of `MAX_INTENTOS` (3)
+
+**Usage:**
+```csharp
+int max = gestor.MaxIntentos;  // Returns 3
+```
+
+## Constructors
+
+### GestorAcceso()
+
+```csharp
+public GestorAcceso()
+```
+
+Default constructor that creates a new access manager with an empty user list.
+
+**Initializes:**
+- `usuarios` to a new empty `List<Usuario>`
+- `intentosFallidos` to 0
+
+**Example:**
+```csharp
+var gestor = new GestorAcceso();
+```
+
+### GestorAcceso(List&lt;Usuario&gt; usuarios)
+
+```csharp
+public GestorAcceso(List<Usuario> usuarios)
+```
+
+Parameterized constructor that creates a new access manager with a pre-existing user list.
+
+<ParamField path="usuarios" type="List<Usuario>" required>
+  A list of existing users to initialize the manager with
+</ParamField>
+
+**Example:**
+```csharp
+var userList = new List<Usuario>
+{
+    new Usuario("admin", "admin123"),
+    new Usuario("user", "password")
+};
+var gestor = new GestorAcceso(userList);
+```
+
+## Methods
+
+### AgregarUsuario
+
+```csharp
+public void AgregarUsuario(Usuario usuario)
+```
+
+Adds a new user to the system's user registry.
+
+<ParamField path="usuario" type="Usuario" required>
+  The user object to add to the registry
+</ParamField>
+
+**Returns:** `void`
+
+**Example:**
+```csharp
+var nuevoUsuario = new Usuario("alice", "secure123");
+gestor.AgregarUsuario(nuevoUsuario);
+```
+
+### ValidarAcceso
+
+```csharp
+public bool ValidarAcceso(string nombre, string contraseña)
+```
+
+Validates user credentials against the registered users and manages failed attempt tracking.
+
+<ParamField path="nombre" type="string" required>
+  The username to validate
+</ParamField>
+
+<ParamField path="contraseña" type="string" required>
+  The password to validate
+</ParamField>
+
+**Returns:** `bool`
+- `true` if credentials are valid (also resets failed attempts counter to 0)
+- `false` if credentials are invalid or system is already blocked (increments failed attempts counter)
+
+**Behavior:**
+1. Returns `false` immediately if the system is already blocked (`intentosFallidos >= MAX_INTENTOS`)
+2. Searches for matching username and password in the user list
+3. On success: resets `intentosFallidos` to 0 and returns `true`
+4. On failure: increments `intentosFallidos` and returns `false`
+
+**Example:**
+```csharp
+bool isValid = gestor.ValidarAcceso("alice", "secure123");
+if (isValid)
+{
+    Console.WriteLine("Access granted!");
+}
+else
+{
+    Console.WriteLine("Invalid credentials");
+}
+```
+
+### ReiniciarIntentos
+
+```csharp
+public void ReiniciarIntentos()
+```
+
+Resets the failed login attempts counter to zero. Typically called after a timeout period when the system is blocked.
+
+**Returns:** `void`
+
+**Example:**
+```csharp
+// After a 5-second timeout
+gestor.ReiniciarIntentos();
+Console.WriteLine("System unblocked");
+```
+
+### EstaBloqueado
+
+```csharp
+public bool EstaBloqueado()
+```
+
+Checks whether the system is currently blocked due to excessive failed login attempts.
+
+**Returns:** `bool`
+- `true` if `intentosFallidos >= MAX_INTENTOS` (system is blocked)
+- `false` otherwise (system is available for login attempts)
+
+**Example:**
+```csharp
+if (gestor.EstaBloqueado())
+{
+    Console.WriteLine("System is blocked. Please wait...");
+    // Implement timeout logic
+}
+```
+
+### MostrarUsuarios
+
+```csharp
+public void MostrarUsuarios()
+```
+
+Internal method that builds a formatted string of registered usernames. Currently does not return or display the string.
+
+**Returns:** `void`
+
+**Note:** This method appears to be incomplete in the implementation - it builds a `StringBuilder` but doesn't use it.
+
+## Usage Example
+
+```csharp
+using ValidadorDeAcceso;
+using System;
+
+// Initialize the access manager
+var gestor = new GestorAcceso();
+
+// Add users
+gestor.AgregarUsuario(new Usuario("admin", "admin123"));
+gestor.AgregarUsuario(new Usuario("user", "password"));
+
+// Validate access
+bool success = gestor.ValidarAcceso("admin", "wrongpass");
+Console.WriteLine($"Login: {success}");  // false
+Console.WriteLine($"Failed attempts: {gestor.IntentosFallidos}");  // 1
+
+// Another failed attempt
+gestor.ValidarAcceso("admin", "wrongpass2");
+Console.WriteLine($"Failed attempts: {gestor.IntentosFallidos}");  // 2
+
+// Third failed attempt
+gestor.ValidarAcceso("admin", "wrongpass3");
+Console.WriteLine($"Blocked: {gestor.EstaBloqueado()}");  // true
+
+// System is now blocked
+gestor.ValidarAcceso("admin", "admin123");  // Returns false even with correct password
+
+// Reset after timeout
+gestor.ReiniciarIntentos();
+Console.WriteLine($"Blocked: {gestor.EstaBloqueado()}");  // false
+
+// Now can login successfully
+success = gestor.ValidarAcceso("admin", "admin123");
+Console.WriteLine($"Login: {success}");  // true
+Console.WriteLine($"Failed attempts: {gestor.IntentosFallidos}");  // 0 (reset on success)
+```
+
+## Security Features
+
+- **Brute-force protection**: Blocks the system after 3 consecutive failed attempts
+- **Automatic counter reset**: Failed attempts counter resets to 0 on successful login
+- **Layered security**: Even with correct credentials, access is denied when blocked
+- **Manual reset capability**: Allows controlled unblocking through `ReiniciarIntentos()`
+
+## Notes
+
+- The class maintains state across login attempts
+- Failed attempts are consecutive - a successful login resets the counter
+- The blocking mechanism is temporary and requires manual reset via `ReiniciarIntentos()`
+- User credentials are stored in-memory and not persisted
+- Password comparison is case-sensitive

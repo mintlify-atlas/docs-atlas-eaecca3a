@@ -1,0 +1,540 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for the Validador de Acceso application
+---
+
+## Overview
+
+This guide provides solutions to common issues you may encounter when building, running, or using the Validador de Acceso application.
+
+<Tip>
+Before troubleshooting, ensure you're using the latest version of the application and that your development environment meets all prerequisites.
+</Tip>
+
+## Build and Compilation Issues
+
+<AccordionGroup>
+  <Accordion title="Missing .NET Framework Target">
+    **Error Message**:
+    ```
+    error MSB3644: The reference assemblies for framework ".NETFramework,Version=v4.7.2" were not found.
+    ```
+    
+    **Cause**: The .NET Framework 4.7.2 Developer Pack is not installed on your system.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Download Developer Pack">
+        Visit the [Microsoft .NET Framework 4.7.2 Developer Pack](https://dotnet.microsoft.com/download/dotnet-framework/net472) download page.
+      </Step>
+      
+      <Step title="Install the Pack">
+        Run the installer and follow the installation wizard.
+      </Step>
+      
+      <Step title="Restart Visual Studio">
+        Close and reopen Visual Studio to recognize the newly installed framework.
+      </Step>
+      
+      <Step title="Rebuild Project">
+        Clean and rebuild the solution: **Build > Clean Solution**, then **Build > Build Solution**.
+      </Step>
+    </Steps>
+    
+    **Alternative Solution**: If you cannot install .NET Framework 4.7.2, you can target a different version:
+    
+    1. Open `ValidadorDeAcceso.csproj` in a text editor
+    2. Change line 11 from:
+       ```xml
+       <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+       ```
+       to your installed version (e.g., `v4.6.1`, `v4.8`)
+    3. Reload and rebuild the project
+  </Accordion>
+  
+  <Accordion title="Build Fails with 'Designer' Errors">
+    **Error Message**:
+    ```
+    The designer could not be shown for this file because none of the classes within it can be designed.
+    ```
+    
+    **Cause**: Visual Studio's designer cache may be corrupted.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Close Visual Studio">
+        Save all work and completely close Visual Studio.
+      </Step>
+      
+      <Step title="Delete Designer Cache">
+        Navigate to your project directory and delete the `.vs` hidden folder:
+        ```bash
+        C:\Path\To\ValidadorDeAcceso\.vs\
+        ```
+      </Step>
+      
+      <Step title="Delete bin and obj Folders">
+        Delete the `bin` and `obj` folders in your project directory.
+      </Step>
+      
+      <Step title="Reopen and Rebuild">
+        Open the solution again and rebuild.
+      </Step>
+    </Steps>
+  </Accordion>
+  
+  <Accordion title="MSBuild Version Compatibility Issues">
+    **Error Message**:
+    ```
+    error MSB4019: The imported project "C:\Microsoft.CSharp.targets" was not found.
+    ```
+    
+    **Cause**: Visual Studio installation is incomplete or MSBuild tools are not properly configured.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Verify Visual Studio Installation">
+        Open **Visual Studio Installer** and ensure **.NET desktop development** workload is installed.
+      </Step>
+      
+      <Step title="Modify Installation">
+        If the workload is missing, click **Modify** and select:
+        - .NET desktop development
+        - .NET Framework 4.7.2 targeting pack
+      </Step>
+      
+      <Step title="Repair Visual Studio">
+        If issues persist, use the **Repair** option in Visual Studio Installer.
+      </Step>
+    </Steps>
+  </Accordion>
+  
+  <Accordion title="Reference Assembly Errors">
+    **Error Message**:
+    ```
+    error CS0246: The type or namespace name 'System.Windows.Forms' could not be found
+    ```
+    
+    **Cause**: Project references are missing or corrupted.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Check References">
+        In Solution Explorer, expand **References** under the project node.
+      </Step>
+      
+      <Step title="Look for Warning Icons">
+        References with yellow warning triangles are broken.
+      </Step>
+      
+      <Step title="Re-add References">
+        Right-click **References** > **Add Reference** > **.NET Framework** tab.
+        Ensure these are checked:
+        - System
+        - System.Core
+        - System.Data
+        - System.Drawing
+        - System.Windows.Forms
+        - System.Xml
+      </Step>
+      
+      <Step title="Rebuild">
+        Press **F6** to rebuild the project.
+      </Step>
+    </Steps>
+  </Accordion>
+</AccordionGroup>
+
+## Runtime Issues
+
+<AccordionGroup>
+  <Accordion title="Application Won't Start - Missing .NET Framework">
+    **Error Message**:
+    ```
+    This application requires .NET Framework 4.7.2 or later.
+    ```
+    
+    **Cause**: The target machine doesn't have the required .NET Framework version installed.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Check Installed Version">
+        Open Command Prompt and run:
+        ```bash
+        reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" /v Release
+        ```
+      </Step>
+      
+      <Step title="Download .NET Framework">
+        If not installed, download the [.NET Framework 4.7.2 Runtime](https://dotnet.microsoft.com/download/dotnet-framework/net472) from Microsoft.
+      </Step>
+      
+      <Step title="Install and Restart">
+        Run the installer and restart the computer.
+      </Step>
+    </Steps>
+    
+    <Note>
+    For deployment to multiple machines, consider using the .NET Framework redistributable package or including it with your installer.
+    </Note>
+  </Accordion>
+  
+  <Accordion title="UI Not Responding During Lockout">
+    **Symptom**: The application freezes or becomes unresponsive when the account is locked.
+    
+    **Cause**: Synchronous blocking in the UI thread (though this shouldn't happen with `async/await`).
+    
+    **Solution**:
+    
+    Verify that the `btnValidar_Click` method is properly using `async/await`:
+    
+    ```csharp
+    private async void btnValidar_Click(object sender, EventArgs e)
+    {
+        // ... validation logic ...
+        
+        if (gestor.EstaBloqueado())
+        {
+            lblEstado.Text = "BLOQUEADO: Espere 5 segundos...";
+            DeshabilitarAcciones();
+            
+            // This should NOT block the UI
+            await Task.Delay(5000);
+            
+            gestor.ReiniciarIntentos();
+            HabilitarAcciones();
+        }
+    }
+    ```
+    
+    If the code is correct but the issue persists, try:
+    
+    <Steps>
+      <Step title="Clean and Rebuild">
+        **Build > Clean Solution**, then rebuild.
+      </Step>
+      
+      <Step title="Run Without Debugger">
+        Press **Ctrl+F5** instead of **F5** to run without the debugger attached.
+      </Step>
+      
+      <Step title="Check System Resources">
+        Ensure your system isn't under heavy load that could cause general unresponsiveness.
+      </Step>
+    </Steps>
+  </Accordion>
+  
+  <Accordion title="Lockout Counter Not Resetting">
+    **Symptom**: The failed attempt counter continues to increment even after successful login or doesn't reset after lockout.
+    
+    **Cause**: Logic error or missing reset call.
+    
+    **Diagnosis**:
+    
+    Check these locations in the code:
+    
+    1. **Successful login** should reset counter (`GestorAcceso.cs:43`):
+       ```csharp
+       intentosFallidos = 0; // This must execute on success
+       ```
+    
+    2. **After lockout** should reset counter (`Form1.cs:105`):
+       ```csharp
+       gestor.ReiniciarIntentos();
+       ```
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Add Debug Logging">
+        Temporarily add debug output to track the counter:
+        ```csharp
+        System.Diagnostics.Debug.WriteLine($"Intentos: {gestor.IntentosFallidos}");
+        ```
+      </Step>
+      
+      <Step title="Verify Reset Calls">
+        Ensure both reset points are being reached during execution.
+      </Step>
+      
+      <Step title="Check for Multiple Instances">
+        Verify you're not creating multiple `GestorAcceso` instances that don't share state.
+      </Step>
+    </Steps>
+  </Accordion>
+  
+  <Accordion title="User List Not Showing or Updating">
+    **Symptom**: The user list doesn't appear when clicking "Mostrar usuarios" or doesn't update when adding users.
+    
+    **Cause**: List synchronization issue between `listaNombres` and the UI control.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Verify List Visibility Toggle">
+        Check `Form1.cs:149-151`:
+        ```csharp
+        lstUsuarios.Visible = !lstUsuarios.Visible;
+        button1.Text = lstUsuarios.Visible ? "Ocultar usuarios" : "Mostrar usuarios";
+        ```
+      </Step>
+      
+      <Step title="Check List Update Logic">
+        Ensure `ActualizarListaUsuarios()` is called after adding users (`Form1.cs:60`):
+        ```csharp
+        gestor.AgregarUsuario(new Usuario(nombre, contraseña));
+        listaNombres.Add(nombre);
+        ActualizarListaUsuarios(); // This must be called
+        ```
+      </Step>
+      
+      <Step title="Verify ListBox Control">
+        Check that `lstUsuarios` is properly initialized in the designer and not null.
+      </Step>
+    </Steps>
+  </Accordion>
+  
+  <Accordion title="Password Field Showing Plain Text">
+    **Symptom**: Passwords are visible as plain text instead of being masked.
+    
+    **Cause**: By default, the password field is not configured to mask input.
+    
+    **Solution**:
+    
+    Add password masking in `Form1.Designer.cs` within the `InitializeComponent()` method:
+    
+    ```csharp
+    // After txtContraseña initialization (around line 83)
+    this.txtContraseña.PasswordChar = '*';
+    // Or use bullet character: this.txtContraseña.PasswordChar = '•';
+    ```
+    
+    <Warning>
+    This is a security consideration for production use. Always mask passwords in real-world applications.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Functional Issues
+
+<AccordionGroup>
+  <Accordion title="Login Always Fails Even with Correct Credentials">
+    **Symptom**: Authentication fails even when using the correct username and password.
+    
+    **Diagnosis Steps**:
+    
+    <Steps>
+      <Step title="Verify User Was Added">
+        Check that the user was successfully added before attempting login. The status label should show:
+        ```
+        Usuario "[nombre]" agregado.
+        ```
+      </Step>
+      
+      <Step title="Check for Typos">
+        Usernames and passwords are case-sensitive. Verify exact spelling.
+      </Step>
+      
+      <Step title="Inspect Validation Logic">
+        In `GestorAcceso.cs:41-42`, the comparison is exact:
+        ```csharp
+        if (usuario.Nombre == nombre && usuario.Contraseña == contraseña)
+        ```
+        There's no trimming or case normalization.
+      </Step>
+      
+      <Step title="Test with Debug Breakpoint">
+        Set a breakpoint in `ValidarAcceso` method to inspect the comparison.
+      </Step>
+    </Steps>
+    
+    **Common Causes**:
+    - Leading/trailing spaces in username (note: password is not trimmed in `Form1.cs:67`)
+    - Wrong character case
+    - User was not successfully added to the list
+  </Accordion>
+  
+  <Accordion title="Can't Add Users - Nothing Happens">
+    **Symptom**: Clicking "Agregar usuario" does nothing or shows an error.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Check Input Validation">
+        Both fields must have values. The code at `Form1.cs:43-48` requires non-empty inputs:
+        ```csharp
+        if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(contraseña))
+        {
+            lblEstado.Text = "Nombre y contraseña obligatorios.";
+            return;
+        }
+        ```
+      </Step>
+      
+      <Step title="Check Status Label">
+        Look at the status label for error messages or confirmation.
+      </Step>
+      
+      <Step title="Verify Button Event Handler">
+        Ensure the button click event is properly wired in `Form1.Designer.cs:103`:
+        ```csharp
+        this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
+        ```
+      </Step>
+    </Steps>
+  </Accordion>
+  
+  <Accordion title="Lockout Duration Not Working as Expected">
+    **Symptom**: The lockout seems shorter or longer than the configured 5 seconds.
+    
+    **Diagnosis**:
+    
+    The delay is set in milliseconds at `Form1.cs:102`:
+    ```csharp
+    await Task.Delay(5000); // 5000ms = 5 seconds
+    ```
+    
+    **Possible Issues**:
+    
+    1. **System clock issues**: Verify system time is correct
+    2. **Code modification**: Check if the delay value was changed
+    3. **Debugger interference**: Running with debugger attached can affect timing
+    
+    **Test Without Debugger**:
+    ```
+    Press Ctrl+F5 to run without debugging and test the timing
+    ```
+  </Accordion>
+  
+  <Accordion title="Application Allows More Attempts Than Configured">
+    **Symptom**: The application allows 4 or more failed attempts when `MAX_INTENTOS` is set to 3.
+    
+    **Cause**: Off-by-one error in understanding the logic.
+    
+    **Explanation**:
+    
+    The logic in `GestorAcceso.cs:34` is:
+    ```csharp
+    if (intentosFallidos >= MAX_INTENTOS)
+    ```
+    
+    This means:
+    - Attempt 1: `intentosFallidos = 0` → Allowed
+    - Attempt 2: `intentosFallidos = 1` → Allowed
+    - Attempt 3: `intentosFallidos = 2` → Allowed
+    - Attempt 4: `intentosFallidos = 3` → **BLOCKED**
+    
+    <Note>
+    This is correct behavior. `MAX_INTENTOS = 3` means the user gets 3 attempts before the 4th attempt triggers the lockout.
+    </Note>
+    
+    **If You Want Immediate Lockout After 3 Failures**:
+    
+    Change the validation logic to increment **before** checking:
+    ```csharp
+    // Increment immediately
+    intentosFallidos++;
+    
+    if (intentosFallidos > MAX_INTENTOS)
+    {
+        return false;
+    }
+    
+    // Then validate...
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Deployment Issues
+
+<AccordionGroup>
+  <Accordion title="Application Works in Debug but Not Release">
+    **Symptom**: The application runs fine in Debug mode but crashes or behaves incorrectly in Release mode.
+    
+    **Cause**: Release builds have optimizations that may expose bugs hidden in Debug mode.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Check for Debug-Only Code">
+        Look for code blocks wrapped in `#if DEBUG` that might affect functionality.
+      </Step>
+      
+      <Step title="Test with Release + Debug Symbols">
+        Temporarily change Release configuration to include full debug symbols:
+        - Open project properties
+        - Select Release configuration
+        - Change **Debug Info** from "pdb-only" to "full"
+        - Rebuild and debug
+      </Step>
+      
+      <Step title="Review Optimization Issues">
+        Some optimization issues can be resolved by marking specific methods with:
+        ```csharp
+        [System.Runtime.CompilerServices.MethodImpl(
+            System.Runtime.CompilerServices.MethodImplOptions.NoOptimization)]
+        ```
+      </Step>
+    </Steps>
+  </Accordion>
+  
+  <Accordion title="Missing DLL Errors on Other Machines">
+    **Symptom**: Application runs on development machine but shows "missing DLL" errors on other computers.
+    
+    **Cause**: .NET Framework or system dependencies not installed on target machine.
+    
+    **Solution**:
+    
+    <Steps>
+      <Step title="Install .NET Framework">
+        Ensure target machine has .NET Framework 4.7.2 or later installed.
+      </Step>
+      
+      <Step title="Check for Additional Dependencies">
+        This application uses only standard .NET Framework assemblies, so additional DLLs should not be required.
+      </Step>
+      
+      <Step title="Create Installer Package">
+        Consider using tools like:
+        - WiX Toolset
+        - InstallShield
+        - Advanced Installer
+        
+        To bundle .NET Framework with your application.
+      </Step>
+    </Steps>
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+<CardGroup cols={2}>
+  <Card title="View Source Code" icon="code" href="https://github.com/your-repo">
+    Check the latest source code for updates and fixes
+  </Card>
+  <Card title="Report an Issue" icon="bug" href="https://github.com/your-repo/issues">
+    Found a bug? Report it on GitHub
+  </Card>
+</CardGroup>
+
+<Note>
+If your issue isn't covered here, consider:
+- Checking the [Building Project](/guides/building-project) guide for build-related issues
+- Reviewing the [Customization](/guides/customization) guide if you've modified the code
+- Searching existing GitHub issues for similar problems
+</Note>
+
+## Additional Resources
+
+- [Microsoft .NET Framework Documentation](https://docs.microsoft.com/en-us/dotnet/framework/)
+- [Windows Forms Documentation](https://docs.microsoft.com/en-us/dotnet/desktop/winforms/)
+- [Visual Studio Troubleshooting](https://docs.microsoft.com/en-us/visualstudio/ide/troubleshooting-resources)
+
+<Warning>
+Always test thoroughly in a development environment before deploying changes to production.
+</Warning>

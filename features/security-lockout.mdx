@@ -1,0 +1,380 @@
+---
+title: 'Security Lockout'
+description: 'Brute-force protection and lockout mechanism with automatic recovery'
+---
+
+## Overview
+
+The Validador de Acceso application implements a robust brute-force protection system that locks out users after 3 consecutive failed login attempts. The system enforces a 5-second timeout before automatically restoring access.
+
+## Lockout Configuration
+
+The lockout behavior is controlled by a public constant:
+
+```csharp
+public const int MAX_INTENTOS = 3;
+```
+
+<Info>
+  The 3-attempt limit balances security with user experience, preventing automated attacks while minimizing inconvenience for legitimate users who mistype passwords.
+</Info>
+
+## Failed Attempts Tracking
+
+The `GestorAcceso` class maintains an internal counter for failed login attempts:
+
+```csharp
+private int intentosFallidos = 0;
+```
+
+### Counter Management
+
+<CardGroup cols={2}>
+  <Card title="Increment on Failure" icon="arrow-up">
+    Counter increases by 1 after each failed validation attempt
+  </Card>
+  <Card title="Reset on Success" icon="rotate-left">
+    Counter resets to 0 when valid credentials are provided
+  </Card>
+</CardGroup>
+
+## Lockout Detection
+
+The system provides a method to check if the account is locked:
+
+```csharp
+public bool EstaBloqueado()
+{
+    return intentosFallidos >= MAX_INTENTOS;
+}
+```
+
+This method is called after each validation attempt to determine if lockout should be triggered:
+
+```csharp
+ActualizarIntentos();
+
+if (gestor.EstaBloqueado())
+{
+    // INICIO DEL BLOQUEO
+    lblEstado.Text = "BLOQUEADO: Espere 5 segundos...";
+    // ... lockout logic
+}
+```
+
+## Async Lockout Implementation
+
+The lockout mechanism uses `async/await` with `Task.Delay` to implement a non-blocking timeout:
+
+```csharp
+private async void btnValidar_Click(object sender, EventArgs e)
+{
+    var nombre = txtNombre.Text.Trim();
+    var contraseña = txtContraseña.Text;
+
+    if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(contraseña))
+    {
+        lblEstado.Text = "Ingrese sus datos.";
+        return;
+    }
+
+    // 1. Validar credenciales
+    var valido = gestor.ValidarAcceso(nombre, contraseña);
+
+    if (valido)
+    {
+        lblEstado.Text = $"¡Bienvenido, {nombre}!";
+    }
+    else
+    {
+        lblEstado.Text = "Credenciales incorrectas.";
+    }
+
+    ActualizarIntentos();
+
+    // 2. Comprobar si debemos bloquear
+    if (gestor.EstaBloqueado())
+    {
+        // INICIO DEL BLOQUEO
+        lblEstado.Text = "BLOQUEADO: Espere 5 segundos...";
+
+        DeshabilitarAcciones(); // Congelar botones
+
+        // Esperar 5 segundos SIN congelar la ventana
+        await Task.Delay(5000);
+
+        // FIN DEL BLOQUEO
+        gestor.ReiniciarIntentos(); // Resetear contador interno
+        HabilitarAcciones();       // Reactivar botones
+
+        ActualizarIntentos();
+        lblEstado.Text = "Sistema desbloqueado. Intente de nuevo.";
+
+        txtContraseña.Clear();
+        txtContraseña.Focus();
+    }
+}
+```
+
+<Note>
+  The `async` keyword on the event handler and `await Task.Delay(5000)` ensure that the Windows Forms UI remains responsive during the 5-second lockout period.
+</Note>
+
+## Lockout Flow
+
+<Steps>
+  <Step title="Trigger Lockout">
+    When 3 failed attempts are detected:
+    
+    ```csharp
+    if (gestor.EstaBloqueado())
+    {
+        lblEstado.Text = "BLOQUEADO: Espere 5 segundos...";
+    ```
+    
+    The status label immediately notifies the user of the lockout.
+  </Step>
+  
+  <Step title="Disable UI Controls">
+    All interactive elements are disabled to prevent further input:
+    
+    ```csharp
+    DeshabilitarAcciones();
+    ```
+    
+    This includes text fields, buttons, and the user list.
+  </Step>
+  
+  <Step title="Async Timeout">
+    The system waits 5 seconds without blocking the UI thread:
+    
+    ```csharp
+    await Task.Delay(5000);
+    ```
+    
+    <Warning>
+      `Task.Delay(5000)` pauses execution for 5000 milliseconds (5 seconds) while keeping the application responsive.
+    </Warning>
+  </Step>
+  
+  <Step title="Reset Counter">
+    After the timeout, the failed attempts counter is reset:
+    
+    ```csharp
+    gestor.ReiniciarIntentos();
+    ```
+  </Step>
+  
+  <Step title="Re-enable UI">
+    All controls are re-enabled for normal operation:
+    
+    ```csharp
+    HabilitarAcciones();
+    ```
+  </Step>
+  
+  <Step title="User Notification">
+    The interface is updated to confirm the unlock:
+    
+    ```csharp
+    ActualizarIntentos();
+    lblEstado.Text = "Sistema desbloqueado. Intente de nuevo.";
+    txtContraseña.Clear();
+    txtContraseña.Focus();
+    ```
+  </Step>
+</Steps>
+
+## UI Control Management
+
+The lockout system temporarily disables all interactive UI elements:
+
+### Disable Controls
+
+```csharp
+private void DeshabilitarAcciones()
+{
+    btnValidar.Enabled = false;
+    btnAgregar.Enabled = false;
+    txtNombre.Enabled = false;
+    txtContraseña.Enabled = false;
+    if (button1 != null) button1.Enabled = false;
+    lstUsuarios.Enabled = false;
+}
+```
+
+### Enable Controls
+
+```csharp
+private void HabilitarAcciones()
+{
+    btnValidar.Enabled = true;
+    btnAgregar.Enabled = true;
+    txtNombre.Enabled = true;
+    txtContraseña.Enabled = true;
+    if (button1 != null) button1.Enabled = true;
+    lstUsuarios.Enabled = true;
+}
+```
+
+<AccordionGroup>
+  <Accordion title="Disabled Controls During Lockout">
+    - **btnValidar**: Validate button
+    - **btnAgregar**: Add user button
+    - **txtNombre**: Username text field
+    - **txtContraseña**: Password text field
+    - **button1**: Show/hide users button
+    - **lstUsuarios**: Users list box
+  </Accordion>
+</AccordionGroup>
+
+## Attempt Counter Display
+
+The UI continuously displays the current lockout status:
+
+```csharp
+private void ActualizarIntentos()
+{
+    lblIntentos.Text = $"Intentos fallidos: {gestor.IntentosFallidos}/{gestor.MaxIntentos}";
+}
+```
+
+### Display Examples
+
+<CodeGroup>
+```text Initial State
+Intentos fallidos: 0/3
+```
+
+```text After First Failure
+Intentos fallidos: 1/3
+```
+
+```text After Second Failure
+Intentos fallidos: 2/3
+```
+
+```text Locked State
+Intentos fallidos: 3/3
+BLOQUEADO: Espere 5 segundos...
+```
+
+```text After Unlock
+Intentos fallidos: 0/3
+Sistema desbloqueado. Intente de nuevo.
+```
+</CodeGroup>
+
+## Multi-Layer Security
+
+The lockout system implements defense in depth with multiple security checks:
+
+### Primary Check: ValidarAcceso()
+
+```csharp
+public bool ValidarAcceso(string nombre, string contraseña)
+{
+    // Si ya está bloqueado lógicamente, no validar (capa de seguridad extra)
+    if (intentosFallidos >= MAX_INTENTOS)
+    {
+        return false;
+    }
+    // ... validation logic
+}
+```
+
+### Secondary Check: EstaBloqueado()
+
+```csharp
+if (gestor.EstaBloqueado())
+{
+    // Trigger lockout UI behavior
+}
+```
+
+<Info>
+  The dual-check approach ensures that even if the UI check is bypassed, the core validation logic still enforces the lockout.
+</Info>
+
+## Reset Mechanism
+
+The `ReiniciarIntentos()` method explicitly resets the counter:
+
+```csharp
+public void ReiniciarIntentos()
+{
+    intentosFallidos = 0;
+}
+```
+
+This method is called:
+- **Automatically** after the 5-second timeout expires
+- **Implicitly** when valid credentials are provided (within `ValidarAcceso`)
+
+## Async/Await Benefits
+
+<CardGroup cols={2}>
+  <Card title="Non-Blocking UI" icon="window">
+    The application window remains responsive during the timeout
+  </Card>
+  <Card title="No Thread Freeze" icon="snowflake">
+    User can still move and interact with the window (though controls are disabled)
+  </Card>
+  <Card title="Clean Code" icon="code">
+    Sequential async code is easier to read than callback-based approaches
+  </Card>
+  <Card title="Proper Threading" icon="gears">
+    Automatic continuation on the UI thread after the delay
+  </Card>
+</CardGroup>
+
+## Key Implementation Details
+
+### Task.Delay vs Thread.Sleep
+
+<Warning>
+  **Never use `Thread.Sleep()` in Windows Forms UI code!**
+  
+  `Thread.Sleep()` would freeze the entire UI, making the application appear unresponsive. `Task.Delay()` with `await` allows the UI thread to process other events while waiting.
+</Warning>
+
+### Event Handler Signature
+
+```csharp
+private async void btnValidar_Click(object sender, EventArgs e)
+```
+
+The `async void` signature is appropriate for event handlers, allowing the use of `await` within the method.
+
+## Security Considerations
+
+<AccordionGroup>
+  <Accordion title="Brute-Force Protection">
+    The 3-attempt limit with a 5-second delay significantly slows down automated password guessing attacks, making brute-force attacks impractical.
+  </Accordion>
+  
+  <Accordion title="Automatic Recovery">
+    The system automatically recovers after the timeout, eliminating the need for administrator intervention for legitimate users who made mistakes.
+  </Accordion>
+  
+  <Accordion title="Visual Feedback">
+    Clear status messages keep users informed about the lockout state and remaining time, improving the user experience.
+  </Accordion>
+  
+  <Accordion title="Defense in Depth">
+    Multiple validation layers ensure the lockout cannot be easily bypassed through UI manipulation.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Use async/await for delays** in UI applications to maintain responsiveness
+2. **Disable all interactive controls** during lockout to prevent circumvention
+3. **Provide clear user feedback** about lockout status and expected wait time
+4. **Reset counter on success** to avoid penalizing users for old mistakes
+5. **Implement multiple security layers** for robust protection
+
+## Related Features
+
+- [User Management](/features/user-management) - Learn how users are registered
+- [Access Validation](/features/access-validation) - Understand the authentication logic

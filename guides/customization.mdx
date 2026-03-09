@@ -1,0 +1,363 @@
+---
+title: Customization
+description: Learn how to customize the Validador de Acceso application including max attempts, timeout duration, and UI elements
+---
+
+## Overview
+
+Validador de Acceso is designed with flexibility in mind. This guide covers the most common customization points including security parameters, timing configurations, and user interface elements.
+
+<Note>
+Before making changes to the source code, create a backup or commit your current code to version control.
+</Note>
+
+## Security Settings
+
+### Maximum Login Attempts
+
+The maximum number of failed login attempts before the account is temporarily locked is controlled by the `MAX_INTENTOS` constant.
+
+**Location**: `GestorAcceso.cs:13`
+
+```csharp
+public const int MAX_INTENTOS = 3;
+```
+
+<Steps>
+  <Step title="Locate the Constant">
+    Open `GestorAcceso.cs` and find the `MAX_INTENTOS` constant at line 13.
+  </Step>
+  
+  <Step title="Modify the Value">
+    Change the value to your desired number of attempts:
+    
+    ```csharp
+    // Allow 5 failed attempts before locking
+    public const int MAX_INTENTOS = 5;
+    
+    // Allow only 2 failed attempts (stricter security)
+    public const int MAX_INTENTOS = 2;
+    ```
+  </Step>
+  
+  <Step title="Rebuild the Project">
+    Press **F6** in Visual Studio or use the Build menu to recompile.
+  </Step>
+</Steps>
+
+<Warning>
+Setting `MAX_INTENTOS` to 1 or lower may create a poor user experience. Consider the balance between security and usability.
+</Warning>
+
+#### How It Works
+
+The `GestorAcceso` class tracks failed login attempts:
+
+```csharp
+public bool ValidarAcceso(string nombre, string contraseña)
+{
+    // Check if already blocked
+    if (intentosFallidos >= MAX_INTENTOS)
+    {
+        return false;
+    }
+    
+    // Validate credentials
+    foreach (var usuario in usuarios)
+    {
+        if (usuario.Nombre == nombre && usuario.Contraseña == contraseña)
+        {
+            intentosFallidos = 0; // Reset on success
+            return true;
+        }
+    }
+    
+    // Increment on failure
+    intentosFallidos++;
+    return false;
+}
+```
+
+### Lockout Duration
+
+The temporary lockout duration after exceeding max attempts is controlled by `Task.Delay()` in the validation logic.
+
+**Location**: `Form1.cs:102`
+
+```csharp
+await Task.Delay(5000); // 5 seconds
+```
+
+<Steps>
+  <Step title="Locate the Delay">
+    Open `Form1.cs` and navigate to the `btnValidar_Click` method around line 102.
+  </Step>
+  
+  <Step title="Modify the Duration">
+    Change the delay value (in milliseconds):
+    
+    ```csharp
+    // 10 second lockout
+    await Task.Delay(10000);
+    
+    // 30 second lockout
+    await Task.Delay(30000);
+    
+    // 1 minute lockout
+    await Task.Delay(60000);
+    ```
+  </Step>
+  
+  <Step title="Update User Feedback">
+    Update the status message to match the new duration:
+    
+    ```csharp
+    lblEstado.Text = "BLOQUEADO: Espere 10 segundos...";
+    await Task.Delay(10000);
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+For production systems, consider implementing exponential backoff (increasing delay with each subsequent lockout) for enhanced security.
+</Tip>
+
+## User Interface Customization
+
+### Button Text Labels
+
+Button labels are defined in `Form1.Designer.cs` and can be modified to match your language or branding preferences.
+
+**Location**: `Form1.Designer.cs`
+
+#### Validate Button
+
+**Line 91** - The login/validation button:
+
+```csharp
+this.btnValidar.Text = "Validar acceso";
+```
+
+**Customization examples**:
+
+```csharp
+this.btnValidar.Text = "Login";           // English
+this.btnValidar.Text = "Iniciar sesión";  // Alternative Spanish
+this.btnValidar.Text = "Sign In";         // Formal English
+```
+
+#### Add User Button
+
+**Line 101** - The user registration button:
+
+```csharp
+this.btnAgregar.Text = "Agregar usuario";
+```
+
+**Customization examples**:
+
+```csharp
+this.btnAgregar.Text = "Register";           // English
+this.btnAgregar.Text = "Registrar usuario";  // Alternative Spanish
+this.btnAgregar.Text = "Add User";          // English
+```
+
+#### Show Users Button
+
+**Line 139** - The toggle button for user list:
+
+```csharp
+this.button1.Text = "Mostrar Usuarios";
+```
+
+**Customization examples**:
+
+```csharp
+this.button1.Text = "Show Users";     // English
+this.button1.Text = "Ver Usuarios";   // Alternative Spanish
+this.button1.Text = "User List";      // Concise English
+```
+
+<Note>
+After modifying `Form1.Designer.cs`, you may also need to update corresponding text in `Form1.cs` (lines 27 and 150) where button text is dynamically changed.
+</Note>
+
+### Field Labels
+
+Input field labels can be customized for different languages or terminology:
+
+**Username Label** (Line 60):
+```csharp
+this.lblNombre.Text = "Nombre:";
+// Options: "Username:", "Usuario:", "User ID:"
+```
+
+**Password Label** (Line 69):
+```csharp
+this.lblContraseña.Text = "Contraseña:";
+// Options: "Password:", "Clave:", "PIN:"
+```
+
+### Window Title
+
+**Location**: `Form1.Designer.cs:157`
+
+```csharp
+this.Text = "Validador de Acceso";
+```
+
+**Customization examples**:
+
+```csharp
+this.Text = "Access Validator";           // English
+this.Text = "Sistema de Autenticación";   // Formal Spanish
+this.Text = "Login Portal";               // Simple English
+this.Text = "CompanyName - Access Control"; // Branded
+```
+
+### Status Messages
+
+Dynamic status messages can be customized throughout `Form1.cs`:
+
+#### Welcome Message (Line 80)
+```csharp
+lblEstado.Text = $"¡Bienvenido, {nombre}!";
+// Options:
+// lblEstado.Text = $"Welcome, {nombre}!";
+// lblEstado.Text = $"Access granted for {nombre}";
+```
+
+#### Incorrect Credentials (Line 86)
+```csharp
+lblEstado.Text = "Credenciales incorrectas.";
+// Options:
+// lblEstado.Text = "Invalid credentials.";
+// lblEstado.Text = "Access denied.";
+```
+
+#### Lockout Message (Line 96)
+```csharp
+lblEstado.Text = "BLOQUEADO: Espere 5 segundos...";
+// Options:
+// lblEstado.Text = "LOCKED: Please wait 5 seconds...";
+// lblEstado.Text = "Account temporarily locked.";
+```
+
+#### Unlock Message (Line 109)
+```csharp
+lblEstado.Text = "Sistema desbloqueado. Intente de nuevo.";
+// Options:
+// lblEstado.Text = "System unlocked. Try again.";
+// lblEstado.Text = "You may now attempt login.";
+```
+
+## Advanced Customization
+
+### Password Field Security
+
+To mask password input with asterisks:
+
+**Location**: `Form1.Designer.cs` - Add to `InitializeComponent()` method
+
+```csharp
+this.txtContraseña.PasswordChar = '*';
+// Or use bullet character
+this.txtContraseña.PasswordChar = '•';
+```
+
+<Warning>
+Currently, passwords are displayed in plain text. It's recommended to add password masking for production use.
+</Warning>
+
+### UI Colors and Styling
+
+Customize form and control colors:
+
+```csharp
+// Set form background color
+this.BackColor = System.Drawing.Color.WhiteSmoke;
+
+// Set button colors
+this.btnValidar.BackColor = System.Drawing.Color.DodgerBlue;
+this.btnValidar.ForeColor = System.Drawing.Color.White;
+
+// Set status label color
+this.lblEstado.ForeColor = System.Drawing.Color.Red; // For errors
+```
+
+### Window Size
+
+**Location**: `Form1.Designer.cs:145`
+
+```csharp
+this.ClientSize = new System.Drawing.Size(544, 211);
+// Adjust width and height as needed
+this.ClientSize = new System.Drawing.Size(600, 250);
+```
+
+### Attempt Counter Display
+
+The attempt counter format is set in `Form1.cs:140`:
+
+```csharp
+lblIntentos.Text = $"Intentos fallidos: {gestor.IntentosFallidos}/{gestor.MaxIntentos}";
+// Customize format:
+// lblIntentos.Text = $"Failed attempts: {gestor.IntentosFallidos} of {gestor.MaxIntentos}";
+// lblIntentos.Text = $"Attempts remaining: {gestor.MaxIntentos - gestor.IntentosFallidos}";
+```
+
+## Rebuilding After Changes
+
+<Steps>
+  <Step title="Save All Files">
+    Press **Ctrl+Shift+S** to save all modified files.
+  </Step>
+  
+  <Step title="Clean Solution">
+    Select **Build > Clean Solution** to remove old build artifacts.
+  </Step>
+  
+  <Step title="Rebuild">
+    Press **F6** or select **Build > Build Solution**.
+  </Step>
+  
+  <Step title="Test Changes">
+    Run the application with **F5** (Debug) or **Ctrl+F5** (Without Debugging) to verify your customizations.
+  </Step>
+</Steps>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Constants for Configuration">
+    Instead of hardcoding values, define constants at the top of your class:
+    
+    ```csharp
+    private const int LOCKOUT_DURATION_MS = 5000;
+    private const string LOCKOUT_MESSAGE = "Account locked. Please wait.";
+    ```
+  </Accordion>
+  
+  <Accordion title="Maintain Consistency">
+    If you change language or terminology, update all related messages throughout the application for consistency.
+  </Accordion>
+  
+  <Accordion title="Test Security Changes">
+    After modifying security parameters like `MAX_INTENTOS` or lockout duration, thoroughly test the authentication flow to ensure it behaves as expected.
+  </Accordion>
+  
+  <Accordion title="Document Your Changes">
+    Keep a changelog or comments in the code describing why certain values were chosen, especially for security-related configurations.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Building the Project" icon="hammer" href="/guides/building-project">
+    Learn how to compile and build your customized application
+  </Card>
+  <Card title="Troubleshooting" icon="life-ring" href="/guides/troubleshooting">
+    Find solutions to common issues you may encounter
+  </Card>
+</CardGroup>

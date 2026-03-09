@@ -1,0 +1,205 @@
+---
+title: 'User Management'
+description: 'User registration and credential management system'
+---
+
+## Overview
+
+The Validador de Acceso application provides a simple yet effective user management system that allows administrators to register users with credentials. The system is built around the `Usuario` class and managed through the `GestorAcceso` class.
+
+## Usuario Class
+
+The `Usuario` class is the core data model for user credentials. It stores user information securely within the application's memory.
+
+### Class Structure
+
+```csharp
+internal class Usuario
+{
+    private string nombre="";  
+    private string contraseña="";
+
+    public string Nombre
+    {
+        get { return nombre; }
+        set { nombre = value; }
+    }   
+    public string Contraseña
+    {
+        get { return contraseña; }
+        set { contraseña = value; }
+    }   
+}
+```
+
+### Key Features
+
+<CardGroup cols={2}>
+  <Card title="Private Fields" icon="lock">
+    Credentials are stored in private fields with public property accessors
+  </Card>
+  <Card title="Dual Constructors" icon="wrench">
+    Supports both empty initialization and parameterized construction
+  </Card>
+</CardGroup>
+
+### Constructors
+
+The `Usuario` class provides two constructors for flexible initialization:
+
+<Accordion title="Default Constructor">
+```csharp
+public Usuario()
+{
+    nombre = "";
+    contraseña = "";
+}
+```
+Initializes an empty user object with blank credentials.
+</Accordion>
+
+<Accordion title="Parameterized Constructor">
+```csharp
+public Usuario(string nombre, string contraseña)
+{
+    this.nombre = nombre;
+    this.contraseña = contraseña;
+}
+```
+Creates a user with specified credentials in a single operation.
+</Accordion>
+
+## User Registration Process
+
+The user registration process is handled through the Windows Forms interface and coordinated by the `GestorAcceso` class.
+
+<Steps>
+  <Step title="Input Validation">
+    The system validates that both nombre (username) and contraseña (password) fields are not empty:
+    
+    ```csharp
+    if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(contraseña))
+    {
+        lblEstado.Text = "Nombre y contraseña obligatorios.";
+        return;
+    }
+    ```
+  </Step>
+  
+  <Step title="User Creation">
+    A new `Usuario` object is instantiated with the provided credentials:
+    
+    ```csharp
+    gestor.AgregarUsuario(new Usuario(nombre, contraseña));
+    listaNombres.Add(nombre);
+    ```
+  </Step>
+  
+  <Step title="UI Feedback">
+    The system provides immediate feedback to the user:
+    
+    ```csharp
+    lblEstado.Text = $"Usuario \"{nombre}\" agregado.";
+    txtNombre.Clear();
+    txtContraseña.Clear();
+    txtNombre.Focus();
+    ```
+  </Step>
+  
+  <Step title="List Update">
+    The registered users list is updated to reflect the new addition:
+    
+    ```csharp
+    ActualizarListaUsuarios();
+    ```
+  </Step>
+</Steps>
+
+## GestorAcceso: User Storage
+
+The `GestorAcceso` class maintains an in-memory collection of registered users:
+
+```csharp
+private List<Usuario> usuarios;
+
+public GestorAcceso()
+{
+    usuarios = new List<Usuario>();
+}
+
+public void AgregarUsuario(Usuario usuario)
+{
+    usuarios.Add(usuario);
+}
+```
+
+<Note>
+  Users are stored in memory only. The application does not persist user data to disk, so all registered users are lost when the application closes.
+</Note>
+
+## User Display Features
+
+The application provides a user-friendly interface to view registered users:
+
+### ListBox Integration
+
+Registered usernames are displayed in a `ListBox` control that can be toggled:
+
+```csharp
+private void button1_Click(object sender, EventArgs e)
+{
+    lstUsuarios.Visible = !lstUsuarios.Visible;
+    button1.Text = lstUsuarios.Visible ? "Ocultar usuarios" : "Mostrar usuarios";
+}
+```
+
+### Auto-Fill on Selection
+
+Clicking a username in the list automatically fills the login field:
+
+```csharp
+private void lstUsuarios_SelectedIndexChanged_1(object sender, EventArgs e)
+{
+    if (lstUsuarios.SelectedItem != null)
+    {
+        txtNombre.Text = lstUsuarios.SelectedItem.ToString();
+        txtContraseña.Clear();
+        txtContraseña.Focus();
+    }
+}
+```
+
+<Warning>
+  The password field is intentionally cleared and focused when selecting a user from the list for security reasons.
+</Warning>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Input Validation">
+    Always validate that both username and password are provided before attempting registration. Empty credentials are not allowed.
+  </Accordion>
+  
+  <Accordion title="User Feedback">
+    Provide clear, immediate feedback to users about the success or failure of registration operations.
+  </Accordion>
+  
+  <Accordion title="UI State Management">
+    Clear input fields after successful registration and return focus to the username field for efficient data entry.
+  </Accordion>
+</AccordionGroup>
+
+## Security Considerations
+
+<Warning>
+  **Important Security Notes:**
+  - Passwords are stored in plain text in memory
+  - No password hashing or encryption is implemented
+  - This is suitable for educational purposes only
+  - Production applications should use secure password storage mechanisms
+</Warning>
+
+## Related Features
+
+- [Access Validation](/features/access-validation) - Learn how registered users are authenticated
+- [Security Lockout](/features/security-lockout) - Understand the brute-force protection mechanism

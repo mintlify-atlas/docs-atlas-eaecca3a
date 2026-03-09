@@ -1,0 +1,98 @@
+---
+title: Introduction
+description: A Windows Forms desktop application for secure user authentication with brute-force protection
+---
+
+# Welcome to Validador de Acceso
+
+Validador de Acceso is a robust Windows Forms desktop application built in C# that provides secure user authentication with intelligent brute-force protection and automatic account lockout mechanisms.
+
+## Overview
+
+This application demonstrates best practices for implementing security features in desktop applications, including:
+
+- **User credential management** with in-memory storage
+- **Password-based authentication** with validation logic
+- **Brute-force attack prevention** through attempt tracking
+- **Automatic lockout mechanisms** after failed login attempts
+- **Asynchronous UI handling** to prevent freezing during security timeouts
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="User Management" icon="users" href="/features/user-management">
+    Register and manage user accounts with secure credential storage
+  </Card>
+  <Card title="Access Validation" icon="shield-check" href="/features/access-validation">
+    Authenticate users with robust credential verification
+  </Card>
+  <Card title="Security Lockout" icon="lock" href="/features/security-lockout">
+    Protect against brute-force attacks with automatic lockout
+  </Card>
+  <Card title="Windows Forms UI" icon="window" href="/api/form-ui">
+    User-friendly desktop interface with responsive controls
+  </Card>
+</CardGroup>
+
+## Architecture
+
+The application is built using a clean, modular architecture:
+
+- **Usuario** - Entity class representing user credentials
+- **GestorAcceso** - Access manager handling authentication and security logic
+- **Form1** - Windows Forms UI providing user interaction layer
+
+## Security Model
+
+Validador de Acceso implements a **three-strike lockout system**:
+
+1. Track failed login attempts per session
+2. Lock access after 3 consecutive failures
+3. Enforce a 5-second timeout before resetting
+4. Resume normal operation after lockout expires
+
+<Note>
+The lockout mechanism uses asynchronous delays to prevent UI freezing, ensuring a smooth user experience even during security enforcement.
+</Note>
+
+## Quick Links
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Get started with installation and setup
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Build and run your first instance
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/gestor-acceso">
+    Explore the complete API documentation
+  </Card>
+  <Card title="Customization" icon="sliders" href="/guides/customization">
+    Learn how to customize the application
+  </Card>
+</CardGroup>
+
+## Technology Stack
+
+- **Framework**: .NET Framework 4.7.2
+- **UI**: Windows Forms
+- **Language**: C# with async/await support
+- **Architecture**: Desktop application (WinExe)
+
+## Next Steps
+
+Ready to get started? Follow these steps:
+
+<Steps>
+  <Step title="Install Prerequisites">
+    Install Visual Studio and .NET Framework 4.7.2 or later
+  </Step>
+  <Step title="Build the Project">
+    Clone the repository and build the solution
+  </Step>
+  <Step title="Run the Application">
+    Launch the executable and start managing user authentication
+  </Step>
+</Steps>
+
+Get started with the [Installation Guide](/installation) or jump straight to the [Quickstart](/quickstart).

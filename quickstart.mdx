@@ -1,80 +1,299 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Build and run Validador de Acceso in minutes
 ---
 
-## Get started in three steps
+## Build the Project
 
-Get your documentation site running locally and make your first customization.
+Once you have the project open in Visual Studio, follow these steps to build the application:
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Select Build Configuration">
+    Choose your build configuration from the toolbar:
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    - **Debug**: Includes debugging symbols (recommended for development)
+    - **Release**: Optimized for production deployment
+  </Step>
+
+  <Step title="Build the Solution">
+    Build the project using one of these methods:
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    - Press `Ctrl + Shift + B`
+    - Navigate to **Build > Build Solution**
+    - Right-click the solution in Solution Explorer and select **Build**
+  </Step>
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+  <Step title="Verify Build Success">
+    Check the **Output** window for build results. You should see:
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+    ```
+    ========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========
+    ```
+    
+    The executable will be created at:
+    - Debug: `bin\Debug\ValidadorDeAcceso.exe`
+    - Release: `bin\Release\ValidadorDeAcceso.exe`
+  </Step>
+</Steps>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  The first build may take a few moments as Visual Studio compiles all source files and resources.
 </Note>
+
+## Run the Application
+
+<Steps>
+  <Step title="Start from Visual Studio">
+    Launch the application:
+    
+    - Press `F5` to run with debugging
+    - Press `Ctrl + F5` to run without debugging
+    - Click the **Start** button in the toolbar
+  </Step>
+
+  <Step title="Application Window Opens">
+    The main form will appear with the following interface elements:
+    
+    - **Nombre** (Name) text field
+    - **Contraseña** (Password) text field
+    - **Agregar** (Add) button
+    - **Validar** (Validate) button
+    - **Mostrar usuarios** (Show users) toggle button
+    - Status label showing "Listo" (Ready)
+    - Failed attempts counter showing "Intentos fallidos: 0/3"
+  </Step>
+</Steps>
+
+## Add Your First User
+
+Let's add a user to the system:
+
+<Steps>
+  <Step title="Enter User Credentials">
+    In the main form:
+    
+    1. Type a username in the **Nombre** field (e.g., "admin")
+    2. Type a password in the **Contraseña** field (e.g., "password123")
+  </Step>
+
+  <Step title="Click Agregar">
+    Click the **Agregar** (Add) button to register the user.
+    
+    The status label will update to confirm:
+    ```
+    Usuario "admin" agregado.
+    ```
+  </Step>
+
+  <Step title="View Registered Users">
+    Click the **Mostrar usuarios** button to display a list of all registered users.
+  </Step>
+</Steps>
+
+<Note>
+  Users are stored in memory during the application session. They will be cleared when you close the application.
+</Note>
+
+## Validate User Credentials
+
+Test the authentication system:
+
+<Steps>
+  <Step title="Enter Correct Credentials">
+    Enter the username and password of a registered user, then click **Validar**.
+    
+    **Success:** The status label will display:
+    ```
+    ¡Bienvenido, admin!
+    ```
+  </Step>
+
+  <Step title="Test Failed Login">
+    Try entering incorrect credentials:
+    
+    **Failed:** The status label will show:
+    ```
+    Credenciales incorrectas.
+    ```
+    
+    The failed attempts counter will increment:
+    ```
+    Intentos fallidos: 1/3
+    ```
+  </Step>
+</Steps>
+
+## Understanding Brute-Force Protection
+
+Validador de Acceso includes built-in brute-force protection:
+
+<Warning>
+  After **3 failed login attempts**, the system will lock for 5 seconds.
+</Warning>
+
+### How It Works
+
+The `GestorAcceso` class tracks failed login attempts:
+
+```csharp ValidadorDeAcceso/GestorAcceso.cs
+public bool ValidarAcceso(string nombre, string contraseña)
+{
+    // Block validation if max attempts reached
+    if (intentosFallidos >= MAX_INTENTOS)
+    {
+        return false;
+    }
+
+    foreach (var usuario in usuarios)
+    {
+        if (usuario.Nombre == nombre && usuario.Contraseña == contraseña)
+        {
+            intentosFallidos = 0; // Success: Reset counter
+            return true;
+        }
+    }
+
+    // Failure: Increment counter
+    intentosFallidos++;
+    return false;
+}
+```
+
+### Lockout Behavior
+
+When the system is locked:
+
+1. **All controls are disabled** for 5 seconds
+2. The status shows: `"BLOQUEADO: Espere 5 segundos..."`
+3. After 5 seconds, the counter resets and controls re-enable
+4. The user can attempt login again
+
+This is implemented asynchronously in `Form1.cs` to prevent UI freezing:
+
+```csharp ValidadorDeAcceso/Form1.cs
+if (gestor.EstaBloqueado())
+{
+    lblEstado.Text = "BLOQUEADO: Espere 5 segundos...";
+    DeshabilitarAcciones(); // Disable all buttons
+
+    // Wait 5 seconds without freezing the window
+    await Task.Delay(5000);
+
+    gestor.ReiniciarIntentos(); // Reset internal counter
+    HabilitarAcciones();        // Re-enable buttons
+
+    ActualizarIntentos();
+    lblEstado.Text = "Sistema desbloqueado. Intente de nuevo.";
+}
+```
+
+## Core Architecture
+
+Understand the key components:
+
+### Usuario Class
+
+Represents a user with credentials:
+
+```csharp ValidadorDeAcceso/Usuario.cs
+internal class Usuario
+{
+    private string nombre="";  
+    private string contraseña="";
+
+    public string Nombre
+    {
+        get { return nombre; }
+        set { nombre = value; }
+    }   
+    
+    public string Contraseña
+    {
+        get { return contraseña; }
+        set { contraseña = value; }
+    }
+
+    public Usuario(string nombre, string contraseña)
+    {
+        this.nombre = nombre;
+        this.contraseña = contraseña;
+    }
+}
+```
+
+### GestorAcceso Class
+
+Manages user authentication and brute-force protection:
+
+- **MAX_INTENTOS**: Constant set to 3 failed attempts
+- **AgregarUsuario()**: Adds users to the system
+- **ValidarAcceso()**: Validates credentials and tracks failures
+- **EstaBloqueado()**: Checks if the system is locked
+- **ReiniciarIntentos()**: Resets the failure counter
+
+### Form1 Class
+
+The main UI form that:
+
+- Displays input fields and buttons
+- Handles user interactions
+- Shows real-time status updates
+- Manages the lockout UI state
+
+## Testing the Application
+
+<CodeGroup>
+
+```text Scenario 1: Successful Login
+1. Add user: "testuser" / "pass123"
+2. Validate with correct credentials
+3. Result: "¡Bienvenido, testuser!"
+4. Failed attempts: 0/3
+```
+
+```text Scenario 2: Trigger Lockout
+1. Add user: "admin" / "secret"
+2. Attempt login with wrong password (3 times)
+3. System locks for 5 seconds
+4. Status shows: "BLOQUEADO: Espere 5 segundos..."
+5. After 5 seconds: "Sistema desbloqueado. Intente de nuevo."
+6. Counter resets to 0/3
+```
+
+```text Scenario 3: Mixed Attempts
+1. Add user: "user1" / "password"
+2. Fail login attempt 1 → Counter: 1/3
+3. Fail login attempt 2 → Counter: 2/3
+4. Succeed with correct credentials → Counter: 0/3
+5. Failed attempts reset on success
+```
+
+</CodeGroup>
+
+## Running the Executable Directly
+
+After building, you can run the executable without Visual Studio:
+
+```bash
+# Navigate to the build output directory
+cd ValidadorDeAcceso\bin\Debug
+
+# Run the application
+ValidadorDeAcceso.exe
+```
+
+<Note>
+  The application requires .NET Framework 4.7.2 runtime to be installed on the target machine.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Core Features" icon="book" href="/features/user-management">
+    Learn advanced features and usage patterns
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/gestor-acceso">
+    Explore the codebase and class documentation
+  </Card>
+</CardGroup>
